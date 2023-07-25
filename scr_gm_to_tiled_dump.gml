@@ -210,80 +210,88 @@ function gm_to_tiled_dump(arr_instance,save_as_one_layer,save_non_json,full_debu
 	var arr_tiled_layer = [];
 	var next_tiled_layer_id = 0;
 	var next_tiled_object_id = 0;
-	var arr_next_tiled_object_id_pretendent = [];
+	var arr_next_tiled_object_id_pretendent = [ 0 ];
+	
+	if ( ! is_array(arr_instance) ) {
+		arr_instance = [ arr_instance ];
+	}
 	
 	if (save_as_one_layer) { //quikly dump all objects in to single layer
 		var arr_object = [];
-	
-		with (arr_instance) {
-			var object_is_a_game_core = false //true - do not include game cores unless this is the "last breath" dump of the game (before crushing)
-			var object_is_fully_managed = false; //true - do not include objects wich life cycle fully managed by other objects (via ref)
-			var object_is_always_rectangle = false;
-			if (object_is_ancestor(object_index,obj_dev_materials)) object_is_always_rectangle = true;
-			switch (object_index) {
-				case obj_dev_gameconsole:
-				case obj_controller:
-				case obj_dev_controller_bot:
-				case obj_gamecontroller:
-				case obj_FightSystem:
-				case obj_scriptedSequence:
-				case obj_saveMenu:
-				case obj_pause:
-				case obj_Cursor:
-					object_is_a_game_core = true;
-					break;
-				case obj_doorwall:
-				case obj_cyclerwall:
-				case obj_cyclerwall_solid:
-					object_is_fully_managed = true;
-					object_is_always_rectangle = true;
-					break;
-				case ent_forceload:
-				case ent_trigger:
-				case obj_trigger_secret:
-				case obj_checkbox:
-				case obj_wall:
-				case obj_halfwall:
-				case obj_voidwall:
-					object_is_always_rectangle = true;
-					break;
-				default:	break;
-			}
-			if ((!full_debug) && (object_is_a_game_core || object_is_fully_managed)) continue; //skip one cycle of with()
+		
+		var inst = -1;
+		repeat(array_length(arr_instance)) {
+			inst++;
+			with (arr_instance[inst]) {
+				var object_is_a_game_core = false //true - do not include game cores unless this is the "last breath" dump of the game (before crushing)
+				var object_is_fully_managed = false; //true - do not include objects wich life cycle fully managed by other objects (via ref)
+				var object_is_always_rectangle = false;
+				if (object_is_ancestor(object_index,obj_dev_materials)) object_is_always_rectangle = true;
+				switch (object_index) {
+					case obj_dev_gameconsole:
+					case obj_controller:
+					case obj_dev_controller_bot:
+					case obj_gamecontroller:
+					case obj_FightSystem:
+					case obj_scriptedSequence:
+					case obj_saveMenu:
+					case obj_pause:
+					case obj_Cursor:
+						object_is_a_game_core = true;
+						break;
+					case obj_doorwall:
+					case obj_cyclerwall:
+					case obj_cyclerwall_solid:
+						object_is_fully_managed = true;
+						object_is_always_rectangle = true;
+						break;
+					case ent_forceload:
+					case ent_trigger:
+					case obj_trigger_secret:
+					case obj_checkbox:
+					case obj_wall:
+					case obj_halfwall:
+					case obj_voidwall:
+						object_is_always_rectangle = true;
+						break;
+					default:	break;
+				}
+				if ((!full_debug) && (object_is_a_game_core || object_is_fully_managed)) continue; //skip one cycle of with()
 			
-			var object = {};
+				var object = {};
 		
-			var arr_concatenated_instance_var_name = array_concat(variable_instance_get_names(id),arr_builtin_var_name);
+				var arr_concatenated_instance_var_name = array_concat(variable_instance_get_names(id),arr_builtin_var_name);
 		
-			length = array_length(arr_excluded_instance_var_name);
-			for (var i = 0;i < length;i++) { //DO NOT replace with repeat loop ! Repeat loop cause bug with continue keyword !
-				var index_to_delete = array_get_index(arr_concatenated_instance_var_name,arr_excluded_instance_var_name[i]);
-				if (index_to_delete < 0) continue;
-				array_delete(arr_concatenated_instance_var_name,index_to_delete,1/*how many*/);
-			}
+				length = array_length(arr_excluded_instance_var_name);
+				for (var i = 0;i < length;i++) { //DO NOT replace with repeat loop ! Repeat loop cause bug with continue keyword !
+					var index_to_delete = array_get_index(arr_concatenated_instance_var_name,arr_excluded_instance_var_name[i]);
+					if (index_to_delete < 0) continue;
+					array_delete(arr_concatenated_instance_var_name,index_to_delete,1/*how many*/);
+				}
 
 	
-			//Tiled object properties
-			variable_struct_set(object,"height",sprite_height); //note - sprite_height is already have image_yscale multiplication in it ! The real sprite can be finded with sprite_get_height() .
-			variable_struct_set(object,"width",sprite_width); //same for sprite_width
-			variable_struct_set(object,"id",id);
-			variable_struct_set(object,"name","");
-			if ((image_xscale == 0 && image_yscale == 0) || /*point in the Tiled*/
-			(image_xscale == 1 && image_yscale == 1 && (!object_is_always_rectangle)) || /*point in the room editor*/
-			(sprite_height == 0 && sprite_width == 0)/*point because in game doesnt have hitbox at all*/) variable_struct_set(object,"point",true);
-			variable_struct_set(object,"rotation",(-image_angle)); // rotation of object in Tiled (backward compatability with scr_custommap_loadder)
-			variable_struct_set(object,"type",object_get_name(object_index));
-			variable_struct_set(object,"visible",visible);
-			variable_struct_set(object,"x",x);
-			variable_struct_set(object,"y",y);
+				//Tiled object properties
+				variable_struct_set(object,"height",sprite_height); //note - sprite_height is already have image_yscale multiplication in it ! The real sprite can be finded with sprite_get_height() .
+				variable_struct_set(object,"width",sprite_width); //same for sprite_width
+				variable_struct_set(object,"id",id);
+				variable_struct_set(object,"name","");
+				if ((image_xscale == 0 && image_yscale == 0) || /*point in the Tiled*/
+				(image_xscale == 1 && image_yscale == 1 && (!object_is_always_rectangle)) || /*point in the room editor*/
+				(sprite_height == 0 && sprite_width == 0)/*point because in game doesnt have hitbox at all*/) variable_struct_set(object,"point",true);
+				variable_struct_set(object,"rotation",(-image_angle)); // rotation of object in Tiled (backward compatability with scr_custommap_loadder)
+				variable_struct_set(object,"type",object_get_name(object_index));
+				variable_struct_set(object,"visible",visible);
+				variable_struct_set(object,"x",x);
+				variable_struct_set(object,"y",y);
 		
 		
-			//====== main work under extracting and converting instance variables in to custom properties ======//
-			variable_struct_set(object,"properties",get_array_of_properties(id,arr_concatenated_instance_var_name));
-			//==================================================================================================//
+				//====== main work under extracting and converting instance variables in to custom properties ======//
+				variable_struct_set(object,"properties",get_array_of_properties(id,arr_concatenated_instance_var_name));
+				//==================================================================================================//
 		
-			array_push(arr_next_tiled_object_id_pretendent,id)
-			array_push(arr_object,object);
+				array_push(arr_next_tiled_object_id_pretendent,id)
+				array_push(arr_object,object);
+			}
 		}
 		var single_layer = {};
 		variable_struct_set(single_layer,"draworder","topdown");
