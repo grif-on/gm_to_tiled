@@ -22,7 +22,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-function gm_to_tiled_dump(arr_instance,save_as_one_layer,save_non_json,full_debug) {
+function gm_to_tiled_dump(arr_instance, save_as_one_layer, save_non_json, full_debug, save_global, instance_offset_x = 0, instance_offset_y = 0) {
 	//How this function represent game data in Tiled format :
 	//
 	//Game global variables     - game global.
@@ -281,8 +281,8 @@ function gm_to_tiled_dump(arr_instance,save_as_one_layer,save_non_json,full_debu
 				variable_struct_set(object,"rotation",(-image_angle)); // rotation of object in Tiled (backward compatability with scr_custommap_loadder)
 				variable_struct_set(object,"type",object_get_name(object_index));
 				variable_struct_set(object,"visible",visible);
-				variable_struct_set(object,"x",x);
-				variable_struct_set(object,"y",y);
+				variable_struct_set(object,"x",x+instance_offset_x);
+				variable_struct_set(object,"y",y+instance_offset_y);
 		
 		
 				//====== main work under extracting and converting instance variables in to custom properties ======//
@@ -336,167 +336,172 @@ function gm_to_tiled_dump(arr_instance,save_as_one_layer,save_non_json,full_debu
 	#endregion
 	
 	#region //Tiled map properties
-	var arr_map_prop = [];	
-	var arr_global_var_name = variable_struct_get_names(global); //yes , global is a stuct :)
-	var arr_excluded_global_var_name = [];
-	#region //never include this variables , even in game crush dumps and full dumps !
-		array_push(arr_excluded_global_var_name,"steam_player_id"); //In any situation , do not expose player real steam id ! We need to ensure that players can safely share their level dump/saves without risk to exopose their maybe private accaunt !
-		array_push(arr_excluded_global_var_name,"achiev_stat_Cheated"); //Just to prevent saved levels to be marked . Note that "dumped" levels marked as global_disable_achievements instead of vanilla achiev_stat_Cheated .
-	#endregion
-	if (!(full_debug)) {
-		array_push(arr_excluded_global_var_name,"steam_app_id"); //This variable can be helpfull in full dumps , despite that it can only contain "670160" and "0" it can help determine whether game was been conected to steam client or not .
-		array_push(arr_excluded_global_var_name,"font_classic"); //hold index
-		array_push(arr_excluded_global_var_name,"font_default"); //hold index
-		array_push(arr_excluded_global_var_name,"font_delirium"); //hold index
-		array_push(arr_excluded_global_var_name,"font_mini"); //hold index
-
-		array_push(arr_excluded_global_var_name,"custommap_name"); //just to prevent overwrite
-		array_push(arr_excluded_global_var_name,"custommap_folder"); //just to prevent overwrite
-		array_push(arr_excluded_global_var_name,"custommap_current"); //just to prevent overwrite
-		array_push(arr_excluded_global_var_name,"custommap_assets"); //hold array of indexes
-		array_push(arr_excluded_global_var_name,"custommap_backgrounds"); //hold array of indexes
-		array_push(arr_excluded_global_var_name,"custommap_layers"); //hold array of indexes
-		array_push(arr_excluded_global_var_name,"custommap_struct");
-		array_push(arr_excluded_global_var_name,"game_last_save_file"); //just to prevent overwrite
-		array_push(arr_excluded_global_var_name,"game_loading_file"); //just to prevent overwrite
-		array_push(arr_excluded_global_var_name,"lantern_grid"); //hold index
-		array_push(arr_excluded_global_var_name,"level_data"); //cached custommap data (for instance this consume 30 kilobytes in pandemonium)
-		array_push(arr_excluded_global_var_name,"stat_data"); //cached globals data
-		array_push(arr_excluded_global_var_name,"level_music_current"); //hold index and break music
-		array_push(arr_excluded_global_var_name,"player_dialogue_current"); //hold index
-		array_push(arr_excluded_global_var_name,"spr_customPlayerGame"); //hold index
-		array_push(arr_excluded_global_var_name,"spr_customPlayerRender"); //hold index
-		array_push(arr_excluded_global_var_name,"spr_presetPlayerGame"); //hold index
-		array_push(arr_excluded_global_var_name,"surface_decal"); //hold index
-		array_push(arr_excluded_global_var_name,"surface_thunder"); //hold index
-		#region // particles indexes
-		array_push(arr_excluded_global_var_name,"pt_Blink_Patricles");
-		array_push(arr_excluded_global_var_name,"pt_Blink_Smoke");
-		array_push(arr_excluded_global_var_name,"pt_Blood_Blast");
-		array_push(arr_excluded_global_var_name,"pt_Blood_Blast_Smoke");
-		array_push(arr_excluded_global_var_name,"pt_Blood_Splash");
-		array_push(arr_excluded_global_var_name,"pt_Book");
-		array_push(arr_excluded_global_var_name,"pt_Concrete");
-		array_push(arr_excluded_global_var_name,"pt_Fireball_Explosion_Flame");
-		array_push(arr_excluded_global_var_name,"pt_Fireball_Explosion_Flame_Quad");
-		array_push(arr_excluded_global_var_name,"pt_Fireball_Explosion_Smoke");
-		array_push(arr_excluded_global_var_name,"pt_Fireball_Explosion_Smoke_Quad");
-		array_push(arr_excluded_global_var_name,"pt_Fireball_Flame");
-		array_push(arr_excluded_global_var_name,"pt_Fireball_Flame_Quad");
-		array_push(arr_excluded_global_var_name,"pt_Fireball_Smoke");
-		array_push(arr_excluded_global_var_name,"pt_Fireball_Smoke_Quad");
-		array_push(arr_excluded_global_var_name,"pt_Health_Up");
-		array_push(arr_excluded_global_var_name,"pt_Item_Pickup_Flame");
-		array_push(arr_excluded_global_var_name,"pt_Item_Pickup_Sparks");
-		array_push(arr_excluded_global_var_name,"pt_Key_PickUp");
-		array_push(arr_excluded_global_var_name,"pt_Pike_Flame");
-		array_push(arr_excluded_global_var_name,"pt_Plasma_Explosion");
-		array_push(arr_excluded_global_var_name,"pt_Plasma_Explosion_Quad");
-		array_push(arr_excluded_global_var_name,"pt_Plasma_Explosion_Smoke");
-		array_push(arr_excluded_global_var_name,"pt_Plasma_Explosion_Smoke_Quad");
-		array_push(arr_excluded_global_var_name,"pt_Plasma_Flame");
-		array_push(arr_excluded_global_var_name,"pt_Plasma_Flame_Quad");
-		array_push(arr_excluded_global_var_name,"pt_Player_Infection");
-		array_push(arr_excluded_global_var_name,"pt_Present_Disappear");
-		array_push(arr_excluded_global_var_name,"pt_Rune_Nuke");
-		array_push(arr_excluded_global_var_name,"pt_Rune_Pickup");
-		array_push(arr_excluded_global_var_name,"pt_Rune_Protection");
-		array_push(arr_excluded_global_var_name,"pt_Rune_Quad");
-		array_push(arr_excluded_global_var_name,"pt_Sanity_Up");
-		array_push(arr_excluded_global_var_name,"pt_Slime_Explosion_Flame");
-		array_push(arr_excluded_global_var_name,"pt_Slime_Explosion_Smoke");
-		array_push(arr_excluded_global_var_name,"pt_Slime_Flame");
-		array_push(arr_excluded_global_var_name,"pt_Slime_Smoke");
-		array_push(arr_excluded_global_var_name,"pt_Smoke");
-		array_push(arr_excluded_global_var_name,"pt_Smoke_Big");
-		array_push(arr_excluded_global_var_name,"pt_Smoke_Small");
-		array_push(arr_excluded_global_var_name,"pt_Smoke_Up");
-		array_push(arr_excluded_global_var_name,"pt_Smoke_Up_Big");
-		array_push(arr_excluded_global_var_name,"pt_Smoke_Up_Small");
-		array_push(arr_excluded_global_var_name,"pt_Spark");
-		array_push(arr_excluded_global_var_name,"pt_Spark_Color");
-		array_push(arr_excluded_global_var_name,"pt_Steam");
-		array_push(arr_excluded_global_var_name,"pt_Teleball_Explosion_Flame");
-		array_push(arr_excluded_global_var_name,"pt_Teleball_Explosion_Smoke");
-		array_push(arr_excluded_global_var_name,"pt_Teleball_Smoke");
-		array_push(arr_excluded_global_var_name,"pt_Teleport_Patricles");
-		array_push(arr_excluded_global_var_name,"pt_Telepot_Smoke");
-		array_push(arr_excluded_global_var_name,"pt_Toxin_Up");
-		array_push(arr_excluded_global_var_name,"pt_explosion_center");
-		array_push(arr_excluded_global_var_name,"pt_explosion_particle");
-		array_push(arr_excluded_global_var_name,"pt_explosion_smoke");
+	var arr_map_prop = [];
+	
+	if (save_global) {
+		
+		var arr_global_var_name = variable_struct_get_names(global); //yes , global is a stuct :)
+		var arr_excluded_global_var_name = [];
+		#region //never include this variables , even in game crush dumps and full dumps !
+			array_push(arr_excluded_global_var_name,"steam_player_id"); //In any situation , do not expose player real steam id ! We need to ensure that players can safely share their level dump/saves without risk to exopose their maybe private accaunt !
+			array_push(arr_excluded_global_var_name,"achiev_stat_Cheated"); //Just to prevent saved levels to be marked . Note that "dumped" levels marked as global_disable_achievements instead of vanilla achiev_stat_Cheated .
 		#endregion
-		#region // configs
-		array_push(arr_excluded_global_var_name,"config_sound");
-		array_push(arr_excluded_global_var_name,"config_music");
-		array_push(arr_excluded_global_var_name,"config_voice");
-		array_push(arr_excluded_global_var_name,"config_controls");
-		array_push(arr_excluded_global_var_name,"config_hud");
-		array_push(arr_excluded_global_var_name,"config_hints");
-		array_push(arr_excluded_global_var_name,"config_language");
-		array_push(arr_excluded_global_var_name,"config_windowed");
-		array_push(arr_excluded_global_var_name,"config_font");
-		array_push(arr_excluded_global_var_name,"config_camera");
-		array_push(arr_excluded_global_var_name,"config_flashlight");
-		array_push(arr_excluded_global_var_name,"config_score");
-		array_push(arr_excluded_global_var_name,"config_healthbars");
-		array_push(arr_excluded_global_var_name,"config_time");
-		array_push(arr_excluded_global_var_name,"config_inspector");
-		array_push(arr_excluded_global_var_name,"config_resolution");
-		array_push(arr_excluded_global_var_name,"config_shadows");
-		array_push(arr_excluded_global_var_name,"config_bloom");
-		array_push(arr_excluded_global_var_name,"config_noise");
-		array_push(arr_excluded_global_var_name,"config_gamespeed");
-		array_push(arr_excluded_global_var_name,"config_voxel");
-		array_push(arr_excluded_global_var_name,"config_gui");
-		array_push(arr_excluded_global_var_name,"config_ignoreerrs");
-		array_push(arr_excluded_global_var_name,"config_screenshot");
-		#endregion
-		array_push(arr_excluded_global_var_name,"current_sigil"); //hold index
-		array_push(arr_excluded_global_var_name,"spr_presetPlayerGame"); //hold index
-		array_push(arr_excluded_global_var_name,"spr_customPlayerRender"); //hold index
-		array_push(arr_excluded_global_var_name,"spr_customPlayerGame"); //hold index
-		array_push(arr_excluded_global_var_name,"partsystem"); //hold index
-		array_push(arr_excluded_global_var_name,"lantern_grid"); //hold index
-		array_push(arr_excluded_global_var_name,"monster_lost"); //hold array of indexes
-		array_push(arr_excluded_global_var_name,"game_forceloaded_monsters"); //hold ds_map index
-	}
-	//Also we need to exclude dump flags from unordered array . We will return them latter so they will be in the end of array ...
-	array_push(arr_excluded_global_var_name,"gm_to_tiled_dump_array_found");
-	array_push(arr_excluded_global_var_name,"gm_to_tiled_dump_undefined_found");
-	array_push(arr_excluded_global_var_name,"gm_to_tiled_dump_infinity_found");
-	array_push(arr_excluded_global_var_name,"gm_to_tiled_dump_nan_found");
-	array_push(arr_excluded_global_var_name,"gm_to_tiled_dump_method_found");
-	array_push(arr_excluded_global_var_name,"gm_to_tiled_dump_struct_found");
-	array_push(arr_excluded_global_var_name,"gm_to_tiled_dump_unknown_found");
-	array_push(arr_excluded_global_var_name,"gm_to_tiled_dump_pointer_found");
-	length = array_length(arr_excluded_global_var_name);
-	for (var i = 0;i < length;i++) { //DO NOT replace with repeat loop ! Repeat loop cause bug with continue keyword !
-		var index_to_delete = array_get_index(arr_global_var_name,arr_excluded_global_var_name[i]);
-		if (index_to_delete < 0) {
-			if (!global.config_ignoreerrs) show_message("not existing global name in arr_excluded_global_var_name ! (" + string(arr_excluded_global_var_name[i]) + ")"); 
-			continue;
-			}
-		array_delete(arr_global_var_name,index_to_delete,1/*how many*/);
-	}
+		if (!(full_debug)) {
+			array_push(arr_excluded_global_var_name,"steam_app_id"); //This variable can be helpfull in full dumps , despite that it can only contain "670160" and "0" it can help determine whether game was been conected to steam client or not .
+			array_push(arr_excluded_global_var_name,"font_classic"); //hold index
+			array_push(arr_excluded_global_var_name,"font_default"); //hold index
+			array_push(arr_excluded_global_var_name,"font_delirium"); //hold index
+			array_push(arr_excluded_global_var_name,"font_mini"); //hold index
+
+			array_push(arr_excluded_global_var_name,"custommap_name"); //just to prevent overwrite
+			array_push(arr_excluded_global_var_name,"custommap_folder"); //just to prevent overwrite
+			array_push(arr_excluded_global_var_name,"custommap_current"); //just to prevent overwrite
+			array_push(arr_excluded_global_var_name,"custommap_assets"); //hold array of indexes
+			array_push(arr_excluded_global_var_name,"custommap_backgrounds"); //hold array of indexes
+			array_push(arr_excluded_global_var_name,"custommap_layers"); //hold array of indexes
+			array_push(arr_excluded_global_var_name,"custommap_struct");
+			array_push(arr_excluded_global_var_name,"game_last_save_file"); //just to prevent overwrite
+			array_push(arr_excluded_global_var_name,"game_loading_file"); //just to prevent overwrite
+			array_push(arr_excluded_global_var_name,"lantern_grid"); //hold index
+			array_push(arr_excluded_global_var_name,"level_data"); //cached custommap data (for instance this consume 30 kilobytes in pandemonium)
+			array_push(arr_excluded_global_var_name,"stat_data"); //cached globals data
+			array_push(arr_excluded_global_var_name,"level_music_current"); //hold index and break music
+			array_push(arr_excluded_global_var_name,"player_dialogue_current"); //hold index
+			array_push(arr_excluded_global_var_name,"spr_customPlayerGame"); //hold index
+			array_push(arr_excluded_global_var_name,"spr_customPlayerRender"); //hold index
+			array_push(arr_excluded_global_var_name,"spr_presetPlayerGame"); //hold index
+			array_push(arr_excluded_global_var_name,"surface_decal"); //hold index
+			array_push(arr_excluded_global_var_name,"surface_thunder"); //hold index
+			#region // particles indexes
+			array_push(arr_excluded_global_var_name,"pt_Blink_Patricles");
+			array_push(arr_excluded_global_var_name,"pt_Blink_Smoke");
+			array_push(arr_excluded_global_var_name,"pt_Blood_Blast");
+			array_push(arr_excluded_global_var_name,"pt_Blood_Blast_Smoke");
+			array_push(arr_excluded_global_var_name,"pt_Blood_Splash");
+			array_push(arr_excluded_global_var_name,"pt_Book");
+			array_push(arr_excluded_global_var_name,"pt_Concrete");
+			array_push(arr_excluded_global_var_name,"pt_Fireball_Explosion_Flame");
+			array_push(arr_excluded_global_var_name,"pt_Fireball_Explosion_Flame_Quad");
+			array_push(arr_excluded_global_var_name,"pt_Fireball_Explosion_Smoke");
+			array_push(arr_excluded_global_var_name,"pt_Fireball_Explosion_Smoke_Quad");
+			array_push(arr_excluded_global_var_name,"pt_Fireball_Flame");
+			array_push(arr_excluded_global_var_name,"pt_Fireball_Flame_Quad");
+			array_push(arr_excluded_global_var_name,"pt_Fireball_Smoke");
+			array_push(arr_excluded_global_var_name,"pt_Fireball_Smoke_Quad");
+			array_push(arr_excluded_global_var_name,"pt_Health_Up");
+			array_push(arr_excluded_global_var_name,"pt_Item_Pickup_Flame");
+			array_push(arr_excluded_global_var_name,"pt_Item_Pickup_Sparks");
+			array_push(arr_excluded_global_var_name,"pt_Key_PickUp");
+			array_push(arr_excluded_global_var_name,"pt_Pike_Flame");
+			array_push(arr_excluded_global_var_name,"pt_Plasma_Explosion");
+			array_push(arr_excluded_global_var_name,"pt_Plasma_Explosion_Quad");
+			array_push(arr_excluded_global_var_name,"pt_Plasma_Explosion_Smoke");
+			array_push(arr_excluded_global_var_name,"pt_Plasma_Explosion_Smoke_Quad");
+			array_push(arr_excluded_global_var_name,"pt_Plasma_Flame");
+			array_push(arr_excluded_global_var_name,"pt_Plasma_Flame_Quad");
+			array_push(arr_excluded_global_var_name,"pt_Player_Infection");
+			array_push(arr_excluded_global_var_name,"pt_Present_Disappear");
+			array_push(arr_excluded_global_var_name,"pt_Rune_Nuke");
+			array_push(arr_excluded_global_var_name,"pt_Rune_Pickup");
+			array_push(arr_excluded_global_var_name,"pt_Rune_Protection");
+			array_push(arr_excluded_global_var_name,"pt_Rune_Quad");
+			array_push(arr_excluded_global_var_name,"pt_Sanity_Up");
+			array_push(arr_excluded_global_var_name,"pt_Slime_Explosion_Flame");
+			array_push(arr_excluded_global_var_name,"pt_Slime_Explosion_Smoke");
+			array_push(arr_excluded_global_var_name,"pt_Slime_Flame");
+			array_push(arr_excluded_global_var_name,"pt_Slime_Smoke");
+			array_push(arr_excluded_global_var_name,"pt_Smoke");
+			array_push(arr_excluded_global_var_name,"pt_Smoke_Big");
+			array_push(arr_excluded_global_var_name,"pt_Smoke_Small");
+			array_push(arr_excluded_global_var_name,"pt_Smoke_Up");
+			array_push(arr_excluded_global_var_name,"pt_Smoke_Up_Big");
+			array_push(arr_excluded_global_var_name,"pt_Smoke_Up_Small");
+			array_push(arr_excluded_global_var_name,"pt_Spark");
+			array_push(arr_excluded_global_var_name,"pt_Spark_Color");
+			array_push(arr_excluded_global_var_name,"pt_Steam");
+			array_push(arr_excluded_global_var_name,"pt_Teleball_Explosion_Flame");
+			array_push(arr_excluded_global_var_name,"pt_Teleball_Explosion_Smoke");
+			array_push(arr_excluded_global_var_name,"pt_Teleball_Smoke");
+			array_push(arr_excluded_global_var_name,"pt_Teleport_Patricles");
+			array_push(arr_excluded_global_var_name,"pt_Telepot_Smoke");
+			array_push(arr_excluded_global_var_name,"pt_Toxin_Up");
+			array_push(arr_excluded_global_var_name,"pt_explosion_center");
+			array_push(arr_excluded_global_var_name,"pt_explosion_particle");
+			array_push(arr_excluded_global_var_name,"pt_explosion_smoke");
+			#endregion
+			#region // configs
+			array_push(arr_excluded_global_var_name,"config_sound");
+			array_push(arr_excluded_global_var_name,"config_music");
+			array_push(arr_excluded_global_var_name,"config_voice");
+			array_push(arr_excluded_global_var_name,"config_controls");
+			array_push(arr_excluded_global_var_name,"config_hud");
+			array_push(arr_excluded_global_var_name,"config_hints");
+			array_push(arr_excluded_global_var_name,"config_language");
+			array_push(arr_excluded_global_var_name,"config_windowed");
+			array_push(arr_excluded_global_var_name,"config_font");
+			array_push(arr_excluded_global_var_name,"config_camera");
+			array_push(arr_excluded_global_var_name,"config_flashlight");
+			array_push(arr_excluded_global_var_name,"config_score");
+			array_push(arr_excluded_global_var_name,"config_healthbars");
+			array_push(arr_excluded_global_var_name,"config_time");
+			array_push(arr_excluded_global_var_name,"config_inspector");
+			array_push(arr_excluded_global_var_name,"config_resolution");
+			array_push(arr_excluded_global_var_name,"config_shadows");
+			array_push(arr_excluded_global_var_name,"config_bloom");
+			array_push(arr_excluded_global_var_name,"config_noise");
+			array_push(arr_excluded_global_var_name,"config_gamespeed");
+			array_push(arr_excluded_global_var_name,"config_voxel");
+			array_push(arr_excluded_global_var_name,"config_gui");
+			array_push(arr_excluded_global_var_name,"config_ignoreerrs");
+			array_push(arr_excluded_global_var_name,"config_screenshot");
+			#endregion
+			array_push(arr_excluded_global_var_name,"current_sigil"); //hold index
+			array_push(arr_excluded_global_var_name,"spr_presetPlayerGame"); //hold index
+			array_push(arr_excluded_global_var_name,"spr_customPlayerRender"); //hold index
+			array_push(arr_excluded_global_var_name,"spr_customPlayerGame"); //hold index
+			array_push(arr_excluded_global_var_name,"partsystem"); //hold index
+			array_push(arr_excluded_global_var_name,"lantern_grid"); //hold index
+			array_push(arr_excluded_global_var_name,"monster_lost"); //hold array of indexes
+			array_push(arr_excluded_global_var_name,"game_forceloaded_monsters"); //hold ds_map index
+		}
+		//Also we need to exclude dump flags from unordered array . We will return them latter so they will be in the end of array ...
+		array_push(arr_excluded_global_var_name,"gm_to_tiled_dump_array_found");
+		array_push(arr_excluded_global_var_name,"gm_to_tiled_dump_undefined_found");
+		array_push(arr_excluded_global_var_name,"gm_to_tiled_dump_infinity_found");
+		array_push(arr_excluded_global_var_name,"gm_to_tiled_dump_nan_found");
+		array_push(arr_excluded_global_var_name,"gm_to_tiled_dump_method_found");
+		array_push(arr_excluded_global_var_name,"gm_to_tiled_dump_struct_found");
+		array_push(arr_excluded_global_var_name,"gm_to_tiled_dump_unknown_found");
+		array_push(arr_excluded_global_var_name,"gm_to_tiled_dump_pointer_found");
+		length = array_length(arr_excluded_global_var_name);
+		for (var i = 0;i < length;i++) { //DO NOT replace with repeat loop ! Repeat loop cause bug with continue keyword !
+			var index_to_delete = array_get_index(arr_global_var_name,arr_excluded_global_var_name[i]);
+			if (index_to_delete < 0) {
+				if (!global.config_ignoreerrs) show_message("not existing global name in arr_excluded_global_var_name ! (" + string(arr_excluded_global_var_name[i]) + ")"); 
+				continue;
+				}
+			array_delete(arr_global_var_name,index_to_delete,1/*how many*/);
+		}
 	
-	// ... and here we return dump flags back . This will ensure that they always will be processed in the end , thus will track non JSON types even in global variables itselfs .
-	array_push(arr_global_var_name,"gm_to_tiled_dump_array_found");
-	array_push(arr_global_var_name,"gm_to_tiled_dump_undefined_found");
-	array_push(arr_global_var_name,"gm_to_tiled_dump_infinity_found") ;
-	array_push(arr_global_var_name,"gm_to_tiled_dump_nan_found");
-	array_push(arr_global_var_name,"gm_to_tiled_dump_method_found");
-	array_push(arr_global_var_name,"gm_to_tiled_dump_struct_found");
-	array_push(arr_global_var_name,"gm_to_tiled_dump_unknown_found");
-	array_push(arr_global_var_name,"gm_to_tiled_dump_pointer_found");
+		// ... and here we return dump flags back . This will ensure that they always will be processed in the end , thus will track non JSON types even in global variables itselfs .
+		array_push(arr_global_var_name,"gm_to_tiled_dump_array_found");
+		array_push(arr_global_var_name,"gm_to_tiled_dump_undefined_found");
+		array_push(arr_global_var_name,"gm_to_tiled_dump_infinity_found") ;
+		array_push(arr_global_var_name,"gm_to_tiled_dump_nan_found");
+		array_push(arr_global_var_name,"gm_to_tiled_dump_method_found");
+		array_push(arr_global_var_name,"gm_to_tiled_dump_struct_found");
+		array_push(arr_global_var_name,"gm_to_tiled_dump_unknown_found");
+		array_push(arr_global_var_name,"gm_to_tiled_dump_pointer_found");
 	
-	//====== main work under extracting and converting global variables in to custom map properties ======//
-	arr_map_prop = get_array_of_properties(global,arr_global_var_name);
-	//==================================================================================================//
+		//====== main work under extracting and converting global variables in to custom map properties ======//
+		arr_map_prop = get_array_of_properties(global,arr_global_var_name);
+		//==================================================================================================//
 	
 	
 	#endregion
 
+	}
+	
 	#region //Main Tiled structure
 	var final_structure = {};
 	var tile_size = 8;
